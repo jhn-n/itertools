@@ -1,165 +1,99 @@
 package itertools
 
 import (
-	"fmt"
+	"iter"
 	"slices"
 	"testing"
 )
 
-var expectedPerms = [][][]int{
+var expectedNPermutations = [][][]int{
 	{{}},
 	{{1}},
 	{{1, 2}, {2, 1}},
-	{{1, 2, 3}, {1, 3, 2}, {2, 1, 3}, {2, 3, 1}, {3, 1, 2}, {3, 2, 1}},
+	{{1, 2, 3}, {1, 3, 2}, {2, 1, 3}, {2, 3, 1}, {3, 2, 1}, {3, 1, 2}},
 }
 
-func TestPermuteInt(t *testing.T) {
-	for i, perms := range expectedPerms {
-		arg := buildSlice(i)
-
-		var exp []string
-		for _, p := range perms {
-			exp = append(exp, fmt.Sprint(p))
-		}
-		slices.Sort(exp)
-
-		var got []string
-		for p := range PermuteInt(arg) {
-			got = append(got, fmt.Sprint(p))
-		}
-		slices.Sort(got)
-
-		if fmt.Sprint(exp) != fmt.Sprint(got) {
-			t.Errorf("PermuteInt(%v) = %v; want %v", arg, got, exp)
-			break
-		}
+func TestPermutations(t *testing.T) {
+	for i, exp := range expectedNPermutations {
+		args := buildSlice(i)
+		testMatches(t, Permutations(args, len(args)), exp)
 	}
+
+	args := []string{"b", "a"}
+	exp := [][]string{{"a", "b"}, {"b", "a"}}
+	testMatches(t, Permutations(args, len(args)), exp)
+
+	args = []string{"a", "b", "c"}
+
+	r := 0
+	exp = [][]string{{}}
+	testMatches(t, Permutations(args, r), exp)
+
+	r = 1
+	exp = [][]string{{"a"}, {"b"}, {"c"}}
+	testMatches(t, Permutations(args, r), exp)
+
+	r = 2
+	exp = [][]string{{"a", "b"}, {"b", "a"}, {"a", "c"},
+		{"c", "a"}, {"b", "c"}, {"c", "b"}}
+	testMatches(t, Permutations(args, r), exp)
 }
 
-func TestPermute(t *testing.T) {
-	for i, perms := range expectedPerms {
-		arg := buildSlice(i)
-
-		var exp []string
-		for _, p := range perms {
-			exp = append(exp, fmt.Sprint(p))
-		}
-		slices.Sort(exp)
-
-		var got []string
-		for p := range Permute(arg) {
-			got = append(got, fmt.Sprint(p))
-		}
-		slices.Sort(got)
-
-		if fmt.Sprint(exp) != fmt.Sprint(got) {
-			t.Errorf("PermuteInt(%v) = %v; want %v", arg, got, exp)
-			break
-		}
+func TestNPermutations(t *testing.T) {
+	for i, exp := range expectedNPermutations {
+		args := buildSlice(i)
+		testMatches(t, NPermutations(args), exp)
 	}
 
-	arg2 := []string{"b", "a"}
-	exp2 := [][]string{{"a", "b"}, {"b", "a"}}
-
-	var got2 []string
-	for p := range Permute(arg2) {
-		got2 = append(got2, fmt.Sprint(p))
-	}
-	slices.Sort(got2)
-	if fmt.Sprint(exp2) != fmt.Sprint(got2) {
-		t.Errorf("PermuteInt(%v) = %v; want %v", arg2, got2, exp2)
-	}
-
+	args := []string{"b", "a"}
+	exp := [][]string{{"a", "b"}, {"b", "a"}}
+	testMatches(t, NPermutations(args), exp)
 }
 
-func TestPermuteInt2(t *testing.T) {
-	for i, perms := range expectedPerms {
-		arg := buildSlice(i)
+func TestPermutationsLen(t *testing.T) {
+	for n := range 7 {
+		arg := buildSlice(n)
+		for r := 0; r <= n; r++ {
+			got := 0
+			for range Permutations(arg, r) {
+				got += 1
 
-		var exp []string
-		for _, p := range perms {
-			exp = append(exp, fmt.Sprint(p))
-		}
-		slices.Sort(exp)
-
-		var got []string
-		for p := range PermuteInt2(arg, len(arg)) {
-			got = append(got, fmt.Sprint(p))
-		}
-		slices.Sort(got)
-
-		if fmt.Sprint(exp) != fmt.Sprint(got) {
-			t.Errorf("PermuteInt(%v) = %v; want %v", arg, got, exp)
-			break
+			}
+			exp := factorial(n) / factorial(n-r)
+			if got != exp {
+				t.Errorf("len(Permutations(%v)) = %v; want %v", arg, got, exp)
+			}
 		}
 	}
 }
 
-func TestPermuteIntLen(t *testing.T) {
+func TestNPermutationsLen(t *testing.T) {
 	for i := range 7 {
 		arg := buildSlice(i)
 
 		got := 0
-		for range PermuteInt(arg) {
+		for range NPermutations(arg) {
 			got += 1
 		}
 		exp := factorial(i)
 		if got != exp {
-			t.Errorf("len(PermuteInt(%v)) = %v; want %v", arg, got, exp)
+			t.Errorf("len(NPermutations(%v)) = %v; want %v", arg, got, exp)
 		}
 	}
 }
 
-func TestPermuteLen(t *testing.T) {
-	for i := range 7 {
-		arg := buildSlice(i)
-
-		got := 0
-		for range Permute(arg) {
-			got += 1
-		}
-		exp := factorial(i)
-		if got != exp {
-			t.Errorf("len(PermuteInt(%v)) = %v; want %v", arg, got, exp)
-		}
-	}
-}
-
-func TestPermuteInt2Len(t *testing.T) {
-	for i := range 7 {
-		arg := buildSlice(i)
-
-		got := 0
-		for range PermuteInt2(arg, len(arg)) {
-			got += 1
-		}
-		exp := factorial(i)
-		if got != exp {
-			t.Errorf("len(PermuteInt(%v)) = %v; want %v", arg, got, exp)
-		}
-	}
-}
-
-func BenchmarkPermuteInt(b *testing.B) {
+func BenchmarkPermutations(b *testing.B) {
 	arg := []int{1, 2, 3, 4, 5, 6}
 	for b.Loop() {
-		for range PermuteInt(arg) {
+		for range Permutations(arg, 6) {
 		}
 	}
 }
 
-func BenchmarkPermute(b *testing.B) {
+func BenchmarkNPermutations(b *testing.B) {
 	arg := []int{1, 2, 3, 4, 5, 6}
 	for b.Loop() {
-		for range Permute(arg) {
-		}
-	}
-}
-
-func BenchmarkPermuteInt2(b *testing.B) {
-	arg := []int{1, 2, 3, 4, 5, 6}
-	for b.Loop() {
-		for range PermuteInt2(arg, 6) {
+		for range NPermutations(arg) {
 		}
 	}
 }
@@ -177,5 +111,48 @@ func factorial(n int) int {
 		return 1
 	}
 	return n * factorial(n-1)
+}
 
+func testMatches[T comparable](t *testing.T, seq iter.Seq[[]T], exp [][]T) {
+	var got [][]T
+	for p := range seq {
+		got = append(got, p)
+	}
+
+	correct := true
+	if len(exp) != len(got) {
+		correct = false
+	}
+
+	for _, g := range got {
+		found := false
+		for _, e := range exp {
+			if slices.Equal(g, e) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			correct = false
+			break
+		}
+	}
+
+	for _, e := range exp {
+		found := false
+		for _, g := range got {
+			if slices.Equal(g, e) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			correct = false
+			break
+		}
+	}
+
+	if !correct {
+		t.Errorf("got %v; want %v", got, exp)
+	}
 }
